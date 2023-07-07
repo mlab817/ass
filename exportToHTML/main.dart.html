@@ -1,0 +1,369 @@
+<html>
+<head>
+<title>main.dart</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #cc7832;}
+.s1 { color: #a9b7c6;}
+.s2 { color: #6a8759;}
+.s3 { color: #ffc66d;}
+.s4 { color: #a9b7c6;}
+.s5 { color: #808080;}
+.s6 { color: #9876aa; font-style: italic;}
+.s7 { color: #6897bb; font-style: italic;}
+.s8 { color: #cc7832; font-style: italic;}
+</style>
+</head>
+<body bgcolor="#2b2b2b">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+main.dart</font>
+</center></td></tr></table>
+<pre><span class="s0">import </span><span class="s2">'dart:convert'</span><span class="s1">;</span>
+
+<span class="s0">import </span><span class="s2">'package:flutter/material.dart'</span><span class="s1">;</span>
+<span class="s0">import </span><span class="s2">'package:http/http.dart'</span><span class="s1">;</span>
+<span class="s0">import </span><span class="s2">'package:shared_preferences/shared_preferences.dart'</span><span class="s1">;</span>
+
+<span class="s0">void </span><span class="s3">main</span><span class="s1">() { 
+  </span><span class="s3">runApp</span><span class="s1">(</span><span class="s0">const </span><span class="s1">MyApp());</span>
+<span class="s1">} 
+</span>
+<span class="s0">class </span><span class="s1">MyApp </span><span class="s0">extends </span><span class="s1">StatelessWidget { 
+  </span><span class="s0">const </span><span class="s1">MyApp({</span><span class="s4">super</span><span class="s1">.key});</span>
+
+  <span class="s5">// This widget is the root of your application.</span>
+  <span class="s0">@override</span>
+  <span class="s1">Widget </span><span class="s3">build</span><span class="s1">(BuildContext context) { 
+    </span><span class="s0">return </span><span class="s1">MaterialApp( 
+      title</span><span class="s0">: </span><span class="s2">'Assessment'</span><span class="s1">,</span>
+      <span class="s1">theme</span><span class="s0">: </span><span class="s1">ThemeData( 
+        colorScheme</span><span class="s0">: </span><span class="s1">ColorScheme.</span><span class="s3">fromSeed</span><span class="s1">(seedColor</span><span class="s0">: </span><span class="s1">Colors.deepPurple),</span>
+        <span class="s1">useMaterial3</span><span class="s0">: </span><span class="s6">true</span><span class="s1">,</span>
+      <span class="s1">),</span>
+      <span class="s1">home</span><span class="s0">: const </span><span class="s1">CityPage(),</span>
+    <span class="s1">);</span>
+  <span class="s1">} 
+} 
+</span>
+<span class="s5">// there are no comments in the code provided which makes it difficult to figure out what is doing what</span>
+<span class="s5">// recommendation: add comments where necessary</span>
+<span class="s5">// meaningless variable names</span>
+<span class="s5">// dangerous use of var</span>
+<span class="s5">// not following naming conventions/rules</span>
+<span class="s5">// doesn't check for null values</span>
+<span class="s0">class </span><span class="s1">CityPage </span><span class="s0">extends </span><span class="s1">StatefulWidget { 
+  </span><span class="s0">const </span><span class="s1">CityPage({Key</span><span class="s0">? </span><span class="s1">key}) </span><span class="s0">: </span><span class="s4">super</span><span class="s1">(key</span><span class="s0">: </span><span class="s1">key);</span>
+
+  <span class="s0">@override</span>
+  <span class="s1">State&lt;CityPage&gt; </span><span class="s3">createState</span><span class="s1">() </span><span class="s0">=&gt; </span><span class="s1">_CityPageState();</span>
+<span class="s1">} 
+</span>
+<span class="s0">class </span><span class="s1">_CityPageState </span><span class="s0">extends </span><span class="s1">State&lt;CityPage&gt; { 
+  bool _hasError </span><span class="s0">=</span>
+      <span class="s6">false</span><span class="s1">; </span><span class="s5">// prefix with _ for private variable, it's better to initialize _hasError as false rather than null</span>
+
+  <span class="s5">// store the error message</span>
+  <span class="s1">String</span><span class="s0">? </span><span class="s1">_error;</span>
+
+  <span class="s1">bool _loading </span><span class="s0">=</span>
+      <span class="s6">false</span><span class="s1">; </span><span class="s5">// should be declared as bool, declaring it as var can result in type change at runtime, variable name is not meaningful, what does _l mean? seems to mean _loading, also, this should be initialized to false?</span>
+  <span class="s5">// final _N = &quot;City&quot;; // camelCase is recommended for naming variables, what does _N mean? unnecessary variable that adds no value</span>
+  <span class="s5">// String?</span>
+  <span class="s5">// _rawStringFromApi; // for private variables, prefixing with _ is recommended, what does d mean?</span>
+  <span class="s0">late </span><span class="s1">TextEditingController</span>
+      <span class="s1">_cityController; </span><span class="s5">// can be declared as final for performance, can be renamed to _cityTextFieldController to emphasize that it is the controller for TextField City</span>
+  <span class="s1">String</span><span class="s0">? </span><span class="s1">_token;</span>
+
+  <span class="s1">String</span><span class="s0">? </span><span class="s1">_cityName;</span>
+
+  <span class="s1">CityApiResponse</span><span class="s0">? </span><span class="s1">_cityApiResponse </span><span class="s0">= </span><span class="s1">CityApiResponse( 
+      weather</span><span class="s0">: </span><span class="s2">'Good'</span><span class="s1">,</span>
+      <span class="s1">name</span><span class="s0">: </span><span class="s2">'Quezon City'</span><span class="s1">,</span>
+      <span class="s1">imageUrl</span><span class="s0">:</span>
+          <span class="s2">'https://play-lh.googleusercontent.com/Nwn4J-GZ0UTSZW1zypE-0ABFVGxfjNWkqrvSpNoWhNRh2y_EIx-KukwW5GgtB5sF3g=w480-h960-rw'</span><span class="s1">,</span>
+      <span class="s1">temp</span><span class="s0">: </span><span class="s2">'31.0'</span><span class="s1">,</span>
+      <span class="s1">unit</span><span class="s0">: </span><span class="s2">'celsius'</span><span class="s1">);</span>
+
+  <span class="s1">Future&lt;void&gt; </span><span class="s3">_loadTokenFromSharedPreferences</span><span class="s1">() </span><span class="s0">async </span><span class="s1">{ 
+    </span><span class="s0">final </span><span class="s1">SharedPreferences sharedPreferences </span><span class="s0">=</span>
+        <span class="s0">await </span><span class="s1">SharedPreferences.</span><span class="s3">getInstance</span><span class="s1">();</span>
+
+    <span class="s0">final </span><span class="s1">token </span><span class="s0">= </span><span class="s1">sharedPreferences.</span><span class="s3">getString</span><span class="s1">(</span><span class="s2">'TOKEN'</span><span class="s1">);</span>
+
+    <span class="s3">setState</span><span class="s1">(() { 
+      _token </span><span class="s0">= </span><span class="s1">token;</span>
+    <span class="s1">});</span>
+  <span class="s1">} 
+</span>
+  <span class="s1">Future&lt;void&gt; </span><span class="s3">_loadCityFromApi</span><span class="s1">() </span><span class="s0">async </span><span class="s1">{ 
+    </span><span class="s5">// if token is null, we should prevent the api call as the user is not logged in</span>
+    <span class="s0">if </span><span class="s1">(_token </span><span class="s0">== </span><span class="s6">null</span><span class="s1">) { 
+      ScaffoldMessenger.</span><span class="s3">of</span><span class="s1">(context).</span><span class="s3">showSnackBar</span><span class="s1">(</span><span class="s0">const </span><span class="s1">SnackBar( 
+          content</span><span class="s0">: </span><span class="s1">Text(</span><span class="s2">'You are not logged in! Please log in to continue.'</span><span class="s1">)));</span>
+
+      <span class="s0">return</span><span class="s1">;</span>
+    <span class="s1">} 
+</span>
+    <span class="s3">setState</span><span class="s1">(() { 
+      _loading </span><span class="s0">= </span><span class="s6">true</span><span class="s1">;</span>
+    <span class="s1">});</span>
+
+    <span class="s5">// http package is missing</span>
+    <span class="s5">// invalid domain</span>
+    <span class="s5">// error is not caught</span>
+    <span class="s5">// move this function call outside the build method</span>
+    <span class="s5">// add loading indicator to prevent successive function calls</span>
+    <span class="s5">// should also check if the text is empty because it can result in unnecessary api call</span>
+    <span class="s5">// post requires a Uri value</span>
+    <span class="s5">// the request should also be `get` because you are fetching data, not creating records</span>
+    <span class="s5">// it is better to parse the response</span>
+    <span class="s5">// it is better to use request class</span>
+    <span class="s0">final </span><span class="s1">url </span><span class="s0">= </span><span class="s1">Uri.</span><span class="s3">https</span><span class="s1">(</span><span class="s2">'mybackend.com'</span><span class="s1">, </span><span class="s2">'/cities'</span><span class="s1">,</span>
+        <span class="s1">CityApiRequest(cityName</span><span class="s0">: </span><span class="s1">_cityController.text).</span><span class="s3">toJson</span><span class="s1">());</span>
+
+    <span class="s0">try </span><span class="s1">{ 
+      </span><span class="s0">final </span><span class="s1">response </span><span class="s0">= await get</span><span class="s1">(url, headers</span><span class="s0">: </span><span class="s1">{ 
+        </span><span class="s5">// shared preferences can be initialized at initState</span>
+        <span class="s5">// check for null value</span>
+        <span class="s5">// only make the call if token value is not null</span>
+        <span class="s2">&quot;Authorization&quot;</span><span class="s0">:</span>
+            <span class="s2">&quot;Bearer $</span><span class="s4">_token</span><span class="s2">&quot; </span><span class="s5">// it's better to declare TOKEN as const for consistency and easier maintainability, Bearer prefix is also missing</span>
+      <span class="s1">});</span>
+
+      <span class="s0">if </span><span class="s1">(response.statusCode </span><span class="s0">== </span><span class="s7">200</span><span class="s1">) { 
+        </span><span class="s5">// parse the response from the server</span>
+        <span class="s0">var </span><span class="s1">decodedResponse </span><span class="s0">= </span><span class="s3">jsonDecode</span><span class="s1">(response.body) </span><span class="s0">as </span><span class="s1">Map&lt;String, dynamic&gt;;</span>
+
+        <span class="s3">setState</span><span class="s1">(() { 
+          _cityApiResponse </span><span class="s0">= </span><span class="s1">CityApiResponse.</span><span class="s3">fromJson</span><span class="s1">(decodedResponse);</span>
+          <span class="s1">_loading </span><span class="s0">= </span><span class="s6">false</span><span class="s1">;</span>
+        <span class="s1">});</span>
+      <span class="s1">} 
+    } </span><span class="s0">catch </span><span class="s1">(error) { 
+      </span><span class="s3">setState</span><span class="s1">(() { 
+        _hasError </span><span class="s0">= </span><span class="s6">true</span><span class="s1">;</span>
+        <span class="s1">_error </span><span class="s0">= </span><span class="s1">error.</span><span class="s3">toString</span><span class="s1">();</span>
+        <span class="s1">_loading </span><span class="s0">= </span><span class="s6">false</span><span class="s1">;</span>
+      <span class="s1">});</span>
+    <span class="s1">} 
+  } 
+</span>
+  <span class="s0">@override</span>
+  <span class="s0">void </span><span class="s3">initState</span><span class="s1">() { 
+    </span><span class="s4">super</span><span class="s1">.</span><span class="s3">initState</span><span class="s1">();</span>
+
+    <span class="s3">_loadTokenFromSharedPreferences</span><span class="s1">();</span>
+
+    <span class="s5">// hook the cityController text to cityName state</span>
+    <span class="s1">_cityController </span><span class="s0">= </span><span class="s1">TextEditingController();</span>
+
+    <span class="s1">_cityController.</span><span class="s3">addListener</span><span class="s1">(() { 
+      </span><span class="s3">setState</span><span class="s1">(() { 
+        _cityName </span><span class="s0">= </span><span class="s1">_cityController.text;</span>
+      <span class="s1">});</span>
+    <span class="s1">});</span>
+  <span class="s1">} 
+</span>
+  <span class="s0">@override</span>
+  <span class="s1">Widget </span><span class="s3">build</span><span class="s1">(BuildContext context) { 
+    </span><span class="s0">return </span><span class="s1">Scaffold( 
+      appBar</span><span class="s0">: </span><span class="s1">AppBar( 
+        centerTitle</span><span class="s0">: </span><span class="s6">true</span><span class="s1">, </span><span class="s5">// easier to read</span>
+        <span class="s1">title</span><span class="s0">: const </span><span class="s1">Text( 
+          </span><span class="s2">&quot;Weather Page&quot;</span><span class="s1">,</span>
+        <span class="s1">), </span><span class="s5">// unnecessary use of center, use centerTitle instead, declare as const for performance</span>
+      <span class="s1">),</span>
+      <span class="s1">body</span><span class="s0">: </span><span class="s1">Column( 
+        children</span><span class="s0">: </span><span class="s1">[ 
+          Row( 
+            children</span><span class="s0">: </span><span class="s1">[ 
+              </span><span class="s5">// unnecessary container as there are no decorations, size or other properties added</span>
+              <span class="s5">// what is needed here is SizedBox to constrain the width of the TextField</span>
+              <span class="s1">Expanded( 
+                child</span><span class="s0">: </span><span class="s1">TextField( 
+                  controller</span><span class="s0">: </span><span class="s1">_cityController,</span>
+                  <span class="s1">decoration</span><span class="s0">: const </span><span class="s1">InputDecoration( 
+                      hintText</span><span class="s0">: </span><span class="s2">&quot;Enter City name&quot;</span><span class="s1">), </span><span class="s5">// unnecessary variable use</span>
+                <span class="s1">),</span>
+              <span class="s1">),</span>
+              <span class="s5">// child is missing</span>
+              <span class="s5">// disable if user is not logged in, i.e. _token is null</span>
+              <span class="s1">ElevatedButton( 
+                </span><span class="s5">// if the city name is empty, disable fetch city button</span>
+                <span class="s1">onPressed</span><span class="s0">: </span><span class="s1">_cityName </span><span class="s0">!= </span><span class="s6">null </span><span class="s0">&amp;&amp; </span><span class="s1">_cityName</span><span class="s0">!</span><span class="s1">.isNotEmpty 
+                    </span><span class="s0">? </span><span class="s1">_loadCityFromApi 
+                    </span><span class="s0">: </span><span class="s6">null</span><span class="s1">,</span>
+                <span class="s1">child</span><span class="s0">: const </span><span class="s1">Text(</span><span class="s2">'Fetch City'</span><span class="s1">),</span>
+              <span class="s1">) 
+            ],</span>
+          <span class="s1">),</span>
+          <span class="s5">// center the contents because using Center alone will only center the contents in the x-axis</span>
+          <span class="s1">Expanded( 
+            child</span><span class="s0">: </span><span class="s3">buildBody</span><span class="s1">(context),</span>
+          <span class="s1">) 
+        ],</span>
+      <span class="s1">),</span>
+    <span class="s1">);</span>
+  <span class="s1">} 
+</span>
+  <span class="s1">Widget </span><span class="s3">buildBody</span><span class="s1">(BuildContext context) { 
+    </span><span class="s5">// replace the code below with parsed cityApiResponse</span>
+    <span class="s5">// String pattern =</span>
+    <span class="s5">// '&quot;(weather)&quot;:&quot;((\\&quot;|[^&quot;])*)&quot;'; // what does rg mean here? isn't it pattern?</span>
+    <span class="s5">// String? w = RegExp(pattern).firstMatch(d).group(</span>
+    <span class="s5">// 2); // check for null as String is not nullable, w is another variable with no meaning</span>
+
+    <span class="s5">// use early return</span>
+
+    <span class="s5">// if the request is loading, show a loading indicator</span>
+    <span class="s0">if </span><span class="s1">(_loading) { 
+      </span><span class="s0">return const </span><span class="s1">Center( 
+        child</span><span class="s0">: </span><span class="s1">CircularProgressIndicator(),</span>
+      <span class="s1">);</span>
+    <span class="s1">} 
+</span>
+    <span class="s5">// if the api has error, display the error as well as a try again button</span>
+    <span class="s0">if </span><span class="s1">(_hasError) { 
+      </span><span class="s0">return </span><span class="s1">Center( 
+        child</span><span class="s0">: </span><span class="s1">Column( 
+          children</span><span class="s0">: </span><span class="s1">[ 
+            Text(_error </span><span class="s0">?? </span><span class="s2">'UNKNOWN ERROR'</span><span class="s1">),</span>
+            <span class="s0">const </span><span class="s1">SizedBox( 
+              height</span><span class="s0">: </span><span class="s7">20</span><span class="s1">,</span>
+            <span class="s1">),</span>
+            <span class="s1">ElevatedButton( 
+                onPressed</span><span class="s0">: </span><span class="s1">_loadCityFromApi, child</span><span class="s0">: const </span><span class="s1">Text(</span><span class="s2">'TRY AGAIN'</span><span class="s1">)),</span>
+          <span class="s1">],</span>
+        <span class="s1">),</span>
+      <span class="s1">);</span>
+    <span class="s1">} 
+</span>
+    <span class="s0">if </span><span class="s1">(_cityName </span><span class="s0">== </span><span class="s6">null </span><span class="s0">|| </span><span class="s1">_cityName</span><span class="s0">!</span><span class="s1">.isEmpty) { 
+      </span><span class="s0">return const </span><span class="s1">Center( 
+        child</span><span class="s0">:</span>
+            <span class="s1">Text(</span><span class="s2">'Please type a name of city to view its weather information.'</span><span class="s1">),</span>
+      <span class="s1">);</span>
+    <span class="s1">} 
+</span>
+    <span class="s0">return </span><span class="s1">_cityApiResponse </span><span class="s0">!= </span><span class="s6">null</span>
+        <span class="s0">? </span><span class="s1">SingleChildScrollView( 
+            child</span><span class="s0">: </span><span class="s1">Card( 
+              child</span><span class="s0">: </span><span class="s1">Column( 
+                children</span><span class="s0">: </span><span class="s1">[ 
+                  </span><span class="s5">// unnecessary use of container</span>
+                  <span class="s5">// extract regex above for better readability</span>
+                  <span class="s5">// check for nullability</span>
+                  <span class="s1">Text(</span><span class="s2">&quot;City: ${</span><span class="s4">_cityApiResponse</span><span class="s2">!.</span><span class="s4">name</span><span class="s2">}&quot;</span><span class="s1">),</span>
+                  <span class="s5">// no reason for using text span</span>
+                  <span class="s1">RichText( 
+                    text</span><span class="s0">: </span><span class="s1">TextSpan(children</span><span class="s0">: </span><span class="s1">[ 
+                      </span><span class="s5">// add const to improve performance</span>
+                      <span class="s0">const </span><span class="s1">TextSpan( 
+                        text</span><span class="s0">: </span><span class="s2">&quot;History:</span><span class="s8">\n</span><span class="s2">&quot;</span><span class="s1">,</span>
+                      <span class="s1">),</span>
+                      <span class="s1">TextSpan( 
+                        text</span><span class="s0">: </span><span class="s1">_cityApiResponse</span><span class="s0">!</span><span class="s1">.name,</span>
+                      <span class="s1">),</span>
+                    <span class="s1">]),</span>
+                  <span class="s1">),</span>
+                  <span class="s1">Container( 
+                    </span><span class="s5">// add const to improve performance</span>
+                    <span class="s1">padding</span><span class="s0">: const </span><span class="s1">EdgeInsets.</span><span class="s3">symmetric</span><span class="s1">(vertical</span><span class="s0">: </span><span class="s7">20.0</span><span class="s1">),</span>
+                    <span class="s1">height</span><span class="s0">: </span><span class="s7">750.0</span><span class="s1">,</span>
+                    <span class="s5">// check for null values</span>
+                    <span class="s1">child</span><span class="s0">: </span><span class="s1">Image.</span><span class="s3">network</span><span class="s1">( 
+                      _cityApiResponse</span><span class="s0">!</span><span class="s1">.imageUrl,</span>
+                      <span class="s1">fit</span><span class="s0">: </span><span class="s1">BoxFit.fill,</span>
+                    <span class="s1">),</span>
+                  <span class="s1">),</span>
+                  <span class="s1">IntrinsicHeight( 
+                    child</span><span class="s0">: </span><span class="s1">Row( 
+                      </span><span class="s5">// added to center the content</span>
+                      <span class="s1">mainAxisAlignment</span><span class="s0">: </span><span class="s1">MainAxisAlignment.center,</span>
+                      <span class="s1">children</span><span class="s0">: </span><span class="s1">[ 
+                        </span><span class="s5">// unnecessary use of container</span>
+                        <span class="s1">Column( 
+                          children</span><span class="s0">: </span><span class="s1">[ 
+                            </span><span class="s5">// add const</span>
+                            <span class="s0">const </span><span class="s1">Text(</span><span class="s2">&quot;Temperature:&quot;</span><span class="s1">),</span>
+                            <span class="s5">// check for null values</span>
+                            <span class="s1">Text(_cityApiResponse</span><span class="s0">!</span><span class="s1">.temp) 
+                          ],</span>
+                        <span class="s1">),</span>
+                        <span class="s0">const </span><span class="s1">VerticalDivider( 
+                          color</span><span class="s0">: </span><span class="s1">Colors.black,</span>
+                        <span class="s1">),</span>
+                        <span class="s5">// replaced with vertical divider</span>
+                        <span class="s5">// Container(</span>
+                        <span class="s5">//   height: 20.0,</span>
+                        <span class="s5">//   // const can be added</span>
+                        <span class="s5">//   decoration: const BoxDecoration(</span>
+                        <span class="s5">//       border: Border(right: BorderSide())),</span>
+                        <span class="s5">// ),</span>
+                        <span class="s5">// unnecessary container</span>
+                        <span class="s1">Column( 
+                          children</span><span class="s0">: </span><span class="s1">[ 
+                            </span><span class="s5">// const can be added</span>
+                            <span class="s0">const </span><span class="s1">Text(</span><span class="s2">&quot;Unit:&quot;</span><span class="s1">),</span>
+                            <span class="s5">// check for null</span>
+                            <span class="s1">Text(_cityApiResponse</span><span class="s0">!</span><span class="s1">.unit) 
+                          ],</span>
+                        <span class="s1">) 
+                      ],</span>
+                    <span class="s1">),</span>
+                  <span class="s1">),</span>
+                <span class="s1">],</span>
+              <span class="s1">),</span>
+            <span class="s1">),</span>
+          <span class="s1">) 
+        </span><span class="s0">: const </span><span class="s1">Center( 
+            child</span><span class="s0">: </span><span class="s1">Text(</span><span class="s2">'NO DATA'</span><span class="s1">),</span>
+          <span class="s1">);</span>
+  <span class="s1">} 
+} 
+</span>
+<span class="s0">class </span><span class="s1">CityApiRequest { 
+  String cityName;</span>
+
+  <span class="s1">CityApiRequest({ 
+    </span><span class="s0">required </span><span class="s4">this</span><span class="s1">.cityName,</span>
+  <span class="s1">});</span>
+
+  <span class="s1">Map&lt;String, dynamic&gt; </span><span class="s3">toJson</span><span class="s1">() </span><span class="s0">=&gt; </span><span class="s1">{ 
+        </span><span class="s2">'city_name'</span><span class="s0">: </span><span class="s1">cityName,</span>
+      <span class="s1">};</span>
+<span class="s1">} 
+</span>
+<span class="s0">class </span><span class="s1">CityApiResponse { 
+  String weather;</span>
+
+  <span class="s1">String name;</span>
+
+  <span class="s1">String imageUrl;</span>
+
+  <span class="s1">String temp;</span>
+
+  <span class="s1">String unit;</span>
+
+  <span class="s1">CityApiResponse({ 
+    </span><span class="s0">required </span><span class="s4">this</span><span class="s1">.weather,</span>
+    <span class="s0">required </span><span class="s4">this</span><span class="s1">.name,</span>
+    <span class="s0">required </span><span class="s4">this</span><span class="s1">.imageUrl,</span>
+    <span class="s0">required </span><span class="s4">this</span><span class="s1">.temp,</span>
+    <span class="s0">required </span><span class="s4">this</span><span class="s1">.unit,</span>
+  <span class="s1">});</span>
+
+  <span class="s0">factory </span><span class="s1">CityApiResponse.</span><span class="s3">fromJson</span><span class="s1">(Map&lt;String, dynamic&gt; json) </span><span class="s0">=&gt;</span>
+      <span class="s1">CityApiResponse( 
+        weather</span><span class="s0">: </span><span class="s1">json[</span><span class="s2">'weather'</span><span class="s1">] </span><span class="s0">?? </span><span class="s2">''</span><span class="s1">,</span>
+        <span class="s1">name</span><span class="s0">: </span><span class="s1">json[</span><span class="s2">'name'</span><span class="s1">] </span><span class="s0">?? </span><span class="s2">''</span><span class="s1">,</span>
+        <span class="s1">imageUrl</span><span class="s0">: </span><span class="s1">json[</span><span class="s2">'image_url'</span><span class="s1">] </span><span class="s0">?? </span><span class="s2">''</span><span class="s1">,</span>
+        <span class="s1">temp</span><span class="s0">: </span><span class="s1">json[</span><span class="s2">'temp'</span><span class="s1">] </span><span class="s0">?? </span><span class="s2">''</span><span class="s1">,</span>
+        <span class="s1">unit</span><span class="s0">: </span><span class="s1">json[</span><span class="s2">'unit'</span><span class="s1">] </span><span class="s0">?? </span><span class="s2">''</span><span class="s1">,</span>
+      <span class="s1">);</span>
+<span class="s1">} 
+</span></pre>
+</body>
+</html>
